@@ -194,10 +194,21 @@ jobs:
           lunch twrp_${{ env.DEVICE_NAME }}-bp2a-eng
         fi
 
-        if ! mka adbd ${{ env.BUILD_TARGET }}image -j$(nproc --all); then
+        # Pemantau memori dan disk
+        ( while true; do echo "[mon] $(date +%H:%M:%S) $(free -m | awk 'NR==2{printf "avail=%sMB ",$7} NR==3{printf "swap=%sMB",$3}') disk=$(df -h / | awk 'NR==2{print $4}')"; sleep 30; done ) &
+        MON_PID=$!
+
+        BUILD_RC=0
+        mka adbd ${{ env.BUILD_TARGET }}image -j$(nproc --all) || BUILD_RC=$?
+
+        kill "$MON_PID" 2>/dev/null || true
+
+        if [ "$BUILD_RC" -ne 0 ]; then
           /tmp/send_msg.sh "❌ Build failed for \`${{ env.DEVICE_NAME }}\` (\`${{ env.DEVICE_TREE_BRANCH }}\`, kernel \`${{ env.VAYU_KERNEL_INPUT }}\`)\n🔗 [View Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          exit 1
+          exit "$BUILD_RC"
         fi
+
+        exit 0
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Show system resources post-build
@@ -212,6 +223,7 @@ jobs:
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Upload build artifact
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: AERA-16.0-${{ env.DEVICE_NAME }}-${{ env.VAYU_KERNEL_INPUT }}-UNTESTED
@@ -219,7 +231,7 @@ jobs:
           ${{ steps.pwd.outputs.workspace-folder }}/${{ env.MANIFEST_BRANCH }}/out/target/product/${{ env.DEVICE_NAME }}/AERA-R*.img
           ${{ steps.pwd.outputs.workspace-folder }}/${{ env.MANIFEST_BRANCH }}/out/target/product/${{ env.DEVICE_NAME }}/AERA-R*.zip
           ${{ steps.pwd.outputs.workspace-folder }}/${{ env.MANIFEST_BRANCH }}/out/target/product/${{ env.DEVICE_NAME }}/${{ env.BUILD_TARGET }}.img
-        if-no-files-found: error
+        if-no-files-found: warn
 
     - name: Upload build log on failure
       if: failure()

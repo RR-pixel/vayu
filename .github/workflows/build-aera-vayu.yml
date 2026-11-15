@@ -163,6 +163,18 @@ jobs:
       with:
         swap-size-gb: 30
 
+    - name: Enable zram swap
+      continue-on-error: true
+      run: |
+        sudo modprobe zram || { sudo apt-get install -y "linux-modules-extra-$(uname -r)" && sudo modprobe zram; }
+        ZDEV=$(sudo zramctl --find --size 12G --algorithm zstd)
+        sudo mkswap "$ZDEV"
+        sudo swapon --priority 100 "$ZDEV"
+        sudo sysctl -w vm.swappiness=100
+        sudo sysctl -w vm.page-cluster=0
+        swapon --show
+        free -m
+
     - name: Show system resources
       run: |
         /tmp/send_msg.sh "📊 Checking runner resources..."

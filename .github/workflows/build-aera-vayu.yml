@@ -114,13 +114,11 @@ jobs:
       run: |
         /tmp/send_msg.sh "🌐 Syncing AERA sources..."
         mkdir ${{ steps.pwd.outputs.workspace-folder }}/${{ env.MANIFEST_BRANCH }} && \
-        cd ${{ steps.pwd.outputs.workspace-folder }}/${{ env.MANIFEST_BRANCH }}
+          cd ${{ steps.pwd.outputs.workspace-folder }}/${{ env.MANIFEST_BRANCH }}
         repo init --depth=1 -u ${{ env.SYNC_URL }} -b ${{ env.MANIFEST_BRANCH }}
-        mkdir -p .repo/local_manifests
-        cp .repo/manifests/remove-minimal.xml .repo/local_manifests/
         repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc)
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
+      
     - name: Get latest bootable/recovery commit
       id: recovery_commit
       run: |

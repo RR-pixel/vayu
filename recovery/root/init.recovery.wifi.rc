@@ -6,17 +6,6 @@
 #     import /init.recovery.wifi.rc
 
 on fs
-    # Jaga-jaga bila bit executable hilang saat file diunggah ke git
-    chmod 0755 /system/bin/qcom_wifi_init
-    chmod 0755 /system/bin/wpa_supplicant_wrapper
-    chmod 0755 /system/bin/cnss-daemon
-    chmod 0755 /system/bin/pd-mapper
-    chmod 0755 /system/bin/pm-proxy
-    chmod 0755 /system/bin/pm-service
-    chmod 0755 /system/bin/qrtr-ns
-    chmod 0755 /system/bin/rmt_storage
-    chmod 0755 /system/bin/tftp_server
-
     mkdir /vendor/firmware_mnt 0771 system system
     wait /dev/block/bootdevice/by-name/modem${ro.boot.slot_suffix:-} 5
     mount vfat /dev/block/bootdevice/by-name/modem${ro.boot.slot_suffix:-} /vendor/firmware_mnt ro nosuid nodev shortname=lower,uid=1000,gid=1000,dmask=0000,fmask=0111
